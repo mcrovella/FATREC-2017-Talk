@@ -97,18 +97,22 @@ class MF_explan():
 
         # construct list of movies, their influence, known rating,
         # and their impact
-        sum_of_impacts = np.sum(J_j.loc[recom, rated_items] *
-                                self.ratings.loc[rated_items, user])
+        sum_of_impacts = J_j.loc[recom, rated_items].dot(
+            self.ratings.loc[rated_items, user]).sum()
+        
+        # sum_of_impacts = np.sum(J_j.loc[recom, rated_items] *
+        #                        self.ratings.loc[rated_items, user])
         influence_list = [(item,
-                           J_j.loc[recom, item],
+                           J_j.loc[recom, item].sum(),
                            self.ratings.loc[item, user],
-                           J_j.loc[recom, item] * self.ratings.loc[item, user])
+                           (J_j.loc[recom, item] * self.ratings.loc[item, user]).sum())
                            for item in rated_items]
 
         report = pd.DataFrame(np.array(
-            [[J_j.loc[recom, item],
+            [[J_j.loc[recom, item].sum(),
                     self.ratings.loc[item, user],
-                    J_j.loc[recom, item] * self.ratings.loc[item, user]]                           for item in rated_items]),
+                    (J_j.loc[recom, item] * self.ratings.loc[item, user]).sum()]
+                            for item in rated_items]),
                     index = rated_items,
                     columns = ['Influence', 'Known Rating', 'Impact'])
 
@@ -116,8 +120,8 @@ class MF_explan():
             return report
 
         print("User ID: {:d}".format(user))
-        print("Recommended movie: {:s}".format(recom))
-        print("Predicted rating: {:.2f}".format(self.pred.loc[recom, user]))
+        print("Recommendation: {}".format(recom))
+        print("Predicted rating: {:.2f}".format(self.pred.loc[recom, user].sum()))
         print("Number of rated movies: {:d}".format(len(rated_items)))
         rpt_heading = "{:35s} {:12s} {:14s} {:12s}"
         rpt_row = "{:35s} {:9.3f} {:13.1f} {:9.3f}"
@@ -127,6 +131,6 @@ class MF_explan():
         for item in sorted(influence_list, key= lambda L:L[1], reverse = True):
             print(rpt_row.format(item[0][:34],item[1],item[2],item[3]))
         print("----------------------------------------------------------------------------")
-        print("{:70s} {:.3f}".format("sum:",sum_of_impacts))
+        print("{:63s} {:.3f}".format("sum:",sum_of_impacts))
 
         return report
